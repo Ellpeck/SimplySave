@@ -28,13 +28,10 @@ var testObj = new Obj {
 };
 Console.WriteLine(testObj);
 
-var saver = new JsonSaver();
-testObj.GetSaveData(saver);
-Console.WriteLine(saver.GetValue());
+var saved = JsonSaver.Save(testObj);
+Console.WriteLine(saved);
 
-var loader = new JsonSaver(saver.GetValue());
-var loaded = new Obj();
-loaded.GetSaveData(loader);
+var loaded = JsonSaver.Load(saved, Obj.CreateObj);
 Console.WriteLine(loaded);
 
 Console.WriteLine(loaded.ToString() == testObj.ToString());
@@ -61,7 +58,7 @@ namespace Playground {
             saver.Add(this.WeirdDict, v => this.WeirdDict = v);
         }
 
-        private static Obj CreateObj(string key) {
+        public static Obj CreateObj(string key) {
             return key == "TinyLife.Obj" ? new Obj() : throw new ArgumentException($"Unknown type key: {key}");
         }
 

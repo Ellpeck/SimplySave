@@ -8,13 +8,9 @@ namespace SimplySave {
         private readonly bool loading;
         private readonly JsonObject value;
 
-        public JsonSaver(JsonObject value = null) {
+        private JsonSaver(JsonObject value = null) {
             this.loading = value != null;
             this.value = value ?? new JsonObject();
-        }
-
-        public JsonObject GetValue() {
-            return (JsonObject) this.value.DeepClone();
         }
 
         /// <inheritdoc />
@@ -27,9 +23,9 @@ namespace SimplySave {
         public override void Add<T>(T currentValue, Action<T> loader, Func<string, T> create, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved))
-                    loader(JsonSaver.LoadObject((JsonObject) saved, create));
+                    loader(JsonSaver.Load((JsonObject) saved, create));
             } else if (currentValue != null) {
-                this.value.Add(Saver.StripName(name), JsonSaver.SaveObject(currentValue));
+                this.value.Add(Saver.StripName(name), JsonSaver.Save(currentValue));
             }
         }
 
@@ -49,13 +45,13 @@ namespace SimplySave {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var collection = createCollection();
                     foreach (var entry in (JsonArray) saved)
-                        collection.Add(entry != null ? JsonSaver.LoadObject((JsonObject) entry, createObj) : default);
+                        collection.Add(entry != null ? JsonSaver.Load((JsonObject) entry, createObj) : default);
                     loader(collection);
                 }
             } else if (currentValue != null) {
                 var array = new JsonArray();
                 foreach (var item in currentValue)
-                    array.Add(item != null ? (JsonNode) JsonSaver.SaveObject(item) : null);
+                    array.Add(item != null ? (JsonNode) JsonSaver.Save(item) : null);
                 this.value.Add(Saver.StripName(name), array);
             }
         }
@@ -83,13 +79,13 @@ namespace SimplySave {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var dict = createDict();
                     foreach (var (key, val) in ((JsonObject) saved))
-                        dict.Add((TKey) Convert.ChangeType(key, typeof(TKey)), val != null ? JsonSaver.LoadObject((JsonObject) val, createValue) : default);
+                        dict.Add((TKey) Convert.ChangeType(key, typeof(TKey)), val != null ? JsonSaver.Load((JsonObject) val, createValue) : default);
                     loader(dict);
                 }
             } else if (currentValue != null) {
                 var obj = new JsonObject();
                 foreach (var (key, val) in currentValue)
-                    obj.Add(key.ToString()!, val != null ? JsonSaver.SaveObject(val) : null);
+                    obj.Add(key.ToString()!, val != null ? JsonSaver.Save(val) : null);
                 this.value.Add(Saver.StripName(name), obj);
             }
         }
@@ -111,14 +107,14 @@ namespace SimplySave {
             }
         }
 
-        private static T LoadObject<T>(JsonObject data, Func<string, T> create) where T : ISaveable {
+        public static T Load<T>(JsonObject data, Func<string, T> create) where T : ISaveable {
             var key = data.TryGetPropertyValue("$type", out var keyVal) ? keyVal.GetValue<string>() : null;
             var obj = create(key);
             obj.GetSaveData(new JsonSaver(data));
             return obj;
         }
 
-        private static JsonObject SaveObject<T>(T obj) where T : ISaveable {
+        public static JsonObject Save<T>(T obj) where T : ISaveable {
             var saver = new JsonSaver();
             obj.GetSaveData(saver);
             return saver.value;
