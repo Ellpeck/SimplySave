@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net452;netstandard2.0;net8.0</TargetFrameworks>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <IsAotCompatible Condition="'$(TargetFramework)'=='net8.0'">true</IsAotCompatible>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Authors>Ellpeck</Authors>
+        <Description>Library for serializing data in various formats without reflection or code generation</Description>
+        <PackageTags>json serialization saving save loading load data binary</PackageTags>
+        <PackageProjectUrl>https://github.com/Ellpeck/SimplySave</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Ellpeck/SimplySave</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <VersionPrefix>0.0.1</VersionPrefix>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+</Project>
