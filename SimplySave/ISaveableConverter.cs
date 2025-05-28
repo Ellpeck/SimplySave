@@ -82,6 +82,20 @@ namespace SimplySave {
 
     }
 
+    public abstract class NewObjectSaveableConverter<TSaveable, TObject> : ObjectSaveableConverter<TSaveable, TObject> where TSaveable : ISaveable, new() {
+
+        public override TSaveable CreateSaveable(string type) {
+            return new TSaveable();
+        }
+
+        public class Inline : ObjectSaveableConverter<TSaveable, TObject>.Inline {
+
+            public Inline(Func<TObject, TSaveable> toSaveable, Func<TSaveable, TObject> fromSaveable) : base(_ => new TSaveable(), toSaveable, fromSaveable) {}
+
+        }
+
+    }
+
     public abstract class ValueSaveableConverter<TValue, TObject> : ISaveableConverter<TObject> where TValue : IConvertible {
 
         public abstract TValue ConvertToValue(TObject obj);
@@ -89,7 +103,7 @@ namespace SimplySave {
         public abstract TObject ConvertFromValue(TValue value);
 
         IConvertible ISaveableConverter<TObject>.ConvertToValue(TObject obj) {
-            return this.ConvertToValue((TObject) obj);
+            return this.ConvertToValue(obj);
         }
 
         TObject ISaveableConverter<TObject>.ConvertFromValue(IConvertible value) {

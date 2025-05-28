@@ -24,7 +24,7 @@ namespace SimplySave {
         // overloads with converter
 
         public virtual void AddObject<T>(T currentValue, Action<T> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddObject(converter.ConvertToSaveable(currentValue), v => converter.ConvertFromSaveable(v), converter.CreateSaveable, name);
+            this.AddObject(converter.ConvertToSaveable(currentValue), v => loader(converter.ConvertFromSaveable(v)), converter.CreateSaveable, name);
         }
 
         public virtual void AddValue<T>(T currentValue, Action<T> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {

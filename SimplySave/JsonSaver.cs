@@ -33,7 +33,7 @@ namespace SimplySave {
         public override void AddValue<T>(T currentValue, Action<T> loader, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved))
-                    loader(saved.GetValue<T>());
+                    loader(JsonSaver.GetValue<T>(saved));
             } else {
                 this.value.Add(Saver.StripName(name), JsonSaver.CreateValue(currentValue));
             }
@@ -62,7 +62,7 @@ namespace SimplySave {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var collection = createCollection();
                     foreach (var entry in (JsonArray) saved)
-                        collection.Add(entry != null ? entry.GetValue<T>() : default);
+                        collection.Add(entry != null ? JsonSaver.GetValue<T>(entry) : default);
                     loader(collection);
                 }
             } else if (currentValue != null) {
@@ -96,7 +96,7 @@ namespace SimplySave {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var dict = createDict();
                     foreach (var (key, val) in (JsonObject) saved)
-                        dict.Add((TKey) Convert.ChangeType(key, typeof(TKey)), val != null ? val.GetValue<TValue>() : default);
+                        dict.Add((TKey) Convert.ChangeType(key, typeof(TKey)), val != null ? JsonSaver.GetValue<TValue>(val) : default);
                     loader(dict);
                 }
             } else if (currentValue != null) {
@@ -136,8 +136,16 @@ namespace SimplySave {
                 short s => JsonValue.Create(s),
                 ushort u => JsonValue.Create(u),
                 string s => JsonValue.Create(s),
+                Enum e => JsonValue.Create(Convert.ToInt64(e)),
                 null => null,
                 _ => throw new ArgumentOutOfRangeException(nameof(value), value, $"Cannot convert value {value} of type {typeof(T)} to JSON")
+            };
+        }
+
+        private static T GetValue<T>(JsonNode node) where T : IConvertible {
+            return typeof(T) switch {
+                _ when typeof(T).IsEnum => (T) Enum.ToObject(typeof(T), node.GetValue<long>()),
+                _ => node.GetValue<T>()
             };
         }
 
