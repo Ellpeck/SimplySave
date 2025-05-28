@@ -49,13 +49,13 @@ namespace Playground {
 
         public void GetSaveData(Saver saver) {
             saver.AddKey("TinyLife.Obj");
-            saver.Add(this.Nested, v => this.Nested = v, Obj.CreateObj);
-            saver.Add(this.Value, v => this.Value = v);
-            saver.Add(this.Test, v => this.Test = v);
-            saver.Add(this.Others, v => this.Others = v, Obj.CreateObj);
-            saver.Add(this.Strings, v => this.Strings = v);
-            saver.Add(this.Dict, v => this.Dict = v, Obj.CreateObj);
-            saver.Add(this.WeirdDict, v => this.WeirdDict = v);
+            saver.AddObject(this.Nested, v => this.Nested = v);
+            saver.AddValue(this.Value, v => this.Value = v);
+            saver.AddValue(this.Test, v => this.Test = v);
+            saver.AddObjects(this.Others, v => this.Others = v);
+            saver.AddValues(this.Strings, v => this.Strings = v);
+            saver.AddObjects(this.Dict, v => this.Dict = v);
+            saver.AddValues(this.WeirdDict, v => this.WeirdDict = v);
         }
 
         public static Obj CreateObj(string key) {

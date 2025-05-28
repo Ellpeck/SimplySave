@@ -20,7 +20,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<T>(T currentValue, Action<T> loader, Func<string, T> create, string name = null) {
+        public override void AddObject<T>(T currentValue, Action<T> loader, Func<string, T> create, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved))
                     loader(JsonSaver.Load((JsonObject) saved, create));
@@ -30,7 +30,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<T>(T currentValue, Action<T> loader, string name = null) {
+        public override void AddValue<T>(T currentValue, Action<T> loader, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved))
                     loader(saved.GetValue<T>());
@@ -40,7 +40,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<string, T> createObj, Func<TCollection> createCollection, string name = null) {
+        public override void AddObjects<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<string, T> createObj, Func<TCollection> createCollection, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var collection = createCollection();
@@ -57,7 +57,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<TCollection> createCollection, string name = null) {
+        public override void AddValues<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<TCollection> createCollection, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var collection = createCollection();
@@ -74,7 +74,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<string, TValue> createValue, Func<TDict> createDict, string name = null) {
+        public override void AddObjects<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<string, TValue> createValue, Func<TDict> createDict, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var dict = createDict();
@@ -91,7 +91,7 @@ namespace SimplySave {
         }
 
         /// <inheritdoc />
-        public override void Add<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<TDict> createDict, string name = null) {
+        public override void AddValues<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<TDict> createDict, string name = null) {
             if (this.loading) {
                 if (this.value.TryGetPropertyValue(Saver.StripName(name), out var saved)) {
                     var dict = createDict();
