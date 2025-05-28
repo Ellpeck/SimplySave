@@ -95,16 +95,12 @@ namespace Playground {
 
         public string Name;
 
-        public class Wrapper : ObjectSaveableConverter<Wrapper, NonSaveableObj>, ISaveable {
+        public class Wrapper : SaveableObjectConverter<Wrapper, NonSaveableObj>, ISaveable {
 
             public string SavedName;
 
             public override NonSaveableObj ConvertFromSaveable(Wrapper saveable) {
                 return new NonSaveableObj {Name = this.SavedName};
-            }
-
-            public override Wrapper CreateSaveable(string type) {
-                return new Wrapper();
             }
 
             public override Wrapper ConvertToSaveable(NonSaveableObj obj) {
