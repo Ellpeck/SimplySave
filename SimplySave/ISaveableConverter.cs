@@ -2,70 +2,51 @@
 using System.Globalization;
 
 namespace SimplySave {
-    public interface ISaveableConverter<T> {
+    public interface ISaveableObjectConverter<TSaveable, TObject> where TSaveable : ISaveable, new() {
 
-        ISaveable CreateSaveable(string type);
+        TSaveable ConvertToSaveable(TObject obj);
 
-        ISaveable ConvertToSaveable(T obj);
+        TObject ConvertFromSaveable(TSaveable saveable);
 
-        T ConvertFromSaveable(ISaveable saveable);
+    }
 
-        IConvertible ConvertToValue(T obj);
+    public interface ISaveableValueConverter<TValue, TObject> where TValue : IConvertible {
 
-        T ConvertFromValue(IConvertible value);
+        TValue ConvertToValue(TObject obj);
+
+        TObject ConvertFromValue(TValue value);
 
     }
 
     public class SaveableConverters {
 
-        public static readonly ISaveableConverter<Guid> Guid = new ValueSaveableConverter<string, Guid>.Inline(v => v.ToString("D", CultureInfo.InvariantCulture), System.Guid.Parse);
-        public static readonly ISaveableConverter<TimeSpan> TimeSpan = new ValueSaveableConverter<string, TimeSpan>.Inline(v => v.ToString(null, CultureInfo.InvariantCulture), v => System.TimeSpan.Parse(v, CultureInfo.InvariantCulture));
+        public static readonly ISaveableValueConverter<string, Guid> Guid = new SaveableValueConverter<string, Guid>.Inline(v => v.ToString("D", CultureInfo.InvariantCulture), System.Guid.Parse);
+        public static readonly ISaveableValueConverter<string, TimeSpan> TimeSpan = new SaveableValueConverter<string, TimeSpan>.Inline(v => v.ToString(null, CultureInfo.InvariantCulture), v => System.TimeSpan.Parse(v, CultureInfo.InvariantCulture));
 
     }
 
-    public abstract class ObjectSaveableConverter<TSaveable, TObject> : ISaveableConverter<TObject> where TSaveable : ISaveable {
-
-        public abstract TSaveable CreateSaveable(string type);
+    public abstract class SaveableObjectConverter<TSaveable, TObject> : ISaveableObjectConverter<TSaveable, TObject> where TSaveable : ISaveable, new() {
 
         public abstract TSaveable ConvertToSaveable(TObject obj);
 
         public abstract TObject ConvertFromSaveable(TSaveable saveable);
 
-        ISaveable ISaveableConverter<TObject>.CreateSaveable(string type) {
-            return this.CreateSaveable(type);
-        }
-
-        ISaveable ISaveableConverter<TObject>.ConvertToSaveable(TObject obj) {
+        TSaveable ISaveableObjectConverter<TSaveable, TObject>.ConvertToSaveable(TObject obj) {
             return this.ConvertToSaveable(obj);
         }
 
-        TObject ISaveableConverter<TObject>.ConvertFromSaveable(ISaveable saveable) {
+        TObject ISaveableObjectConverter<TSaveable, TObject>.ConvertFromSaveable(TSaveable saveable) {
             return this.ConvertFromSaveable((TSaveable) saveable);
         }
 
-        IConvertible ISaveableConverter<TObject>.ConvertToValue(TObject obj) {
-            throw new NotSupportedException("ObjectSaveableConverter can only convert to and from saveables, not values");
-        }
+        public class Inline : SaveableObjectConverter<TSaveable, TObject> {
 
-        TObject ISaveableConverter<TObject>.ConvertFromValue(IConvertible value) {
-            throw new NotSupportedException("ObjectSaveableConverter can only convert to and from saveables, not values");
-        }
-
-        public class Inline : ObjectSaveableConverter<TSaveable, TObject> {
-
-            private readonly Func<string, TSaveable> createSaveable;
             private readonly Func<TObject, TSaveable> toSaveable;
             private readonly Func<TSaveable, TObject> fromSaveable;
 
-            public Inline(Func<string, TSaveable> createSaveable, Func<TObject, TSaveable> toSaveable, Func<TSaveable, TObject> fromSaveable) {
-                this.createSaveable = createSaveable;
+            public Inline(Func<TObject, TSaveable> toSaveable, Func<TSaveable, TObject> fromSaveable) {
                 this.toSaveable = toSaveable;
                 this.fromSaveable = fromSaveable;
-            }
-
-            /// <inheritdoc />
-            public override TSaveable CreateSaveable(string type) {
-                return this.createSaveable(type);
             }
 
             /// <inheritdoc />
@@ -82,47 +63,21 @@ namespace SimplySave {
 
     }
 
-    public abstract class NewObjectSaveableConverter<TSaveable, TObject> : ObjectSaveableConverter<TSaveable, TObject> where TSaveable : ISaveable, new() {
-
-        public override TSaveable CreateSaveable(string type) {
-            return new TSaveable();
-        }
-
-        public class Inline : ObjectSaveableConverter<TSaveable, TObject>.Inline {
-
-            public Inline(Func<TObject, TSaveable> toSaveable, Func<TSaveable, TObject> fromSaveable) : base(_ => new TSaveable(), toSaveable, fromSaveable) {}
-
-        }
-
-    }
-
-    public abstract class ValueSaveableConverter<TValue, TObject> : ISaveableConverter<TObject> where TValue : IConvertible {
+    public abstract class SaveableValueConverter<TValue, TObject> : ISaveableValueConverter<TValue, TObject> where TValue : IConvertible {
 
         public abstract TValue ConvertToValue(TObject obj);
 
         public abstract TObject ConvertFromValue(TValue value);
 
-        IConvertible ISaveableConverter<TObject>.ConvertToValue(TObject obj) {
+        TValue ISaveableValueConverter<TValue, TObject>.ConvertToValue(TObject obj) {
             return this.ConvertToValue(obj);
         }
 
-        TObject ISaveableConverter<TObject>.ConvertFromValue(IConvertible value) {
-            return this.ConvertFromValue((TValue) value);
+        TObject ISaveableValueConverter<TValue, TObject>.ConvertFromValue(TValue value) {
+            return this.ConvertFromValue(value);
         }
 
-        ISaveable ISaveableConverter<TObject>.CreateSaveable(string type) {
-            throw new NotSupportedException("ValueSaveableConverter can only convert to and from values, not saveables");
-        }
-
-        ISaveable ISaveableConverter<TObject>.ConvertToSaveable(TObject obj) {
-            throw new NotSupportedException("ValueSaveableConverter can only convert to and from values, not saveables");
-        }
-
-        TObject ISaveableConverter<TObject>.ConvertFromSaveable(ISaveable saveable) {
-            throw new NotSupportedException("ValueSaveableConverter can only convert to and from values, not saveables");
-        }
-
-        public class Inline : ValueSaveableConverter<TValue, TObject> {
+        public class Inline : SaveableValueConverter<TValue, TObject> {
 
             private readonly Func<TObject, TValue> toValue;
             private readonly Func<TValue, TObject> fromValue;

@@ -23,28 +23,28 @@ namespace SimplySave {
 
         // overloads with converter
 
-        public virtual void AddObject<T>(T currentValue, Action<T> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddObject(converter.ConvertToSaveable(currentValue), v => loader(converter.ConvertFromSaveable(v)), converter.CreateSaveable, name);
+        public virtual void AddObject<TSaveable, TObject>(TObject currentValue, Action<TObject> loader, ISaveableObjectConverter<TSaveable, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TSaveable : ISaveable, new() {
+            this.AddObject(converter.ConvertToSaveable(currentValue), v => loader(converter.ConvertFromSaveable(v)), _ => new TSaveable(), name);
         }
 
-        public virtual void AddValue<T>(T currentValue, Action<T> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
+        public virtual void AddValue<TValue, TObject>(TObject currentValue, Action<TObject> loader, ISaveableValueConverter<TValue, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TValue : IConvertible {
             this.AddValue(converter.ConvertToValue(currentValue), v => loader(converter.ConvertFromValue(v)), name);
         }
 
-        public virtual void AddObjects<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<IEnumerable<T>, TCollection> createCollection, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TCollection : ICollection<T> {
-            this.AddObjects(currentValue?.Select(converter.ConvertToSaveable).ToList(), v => loader(createCollection(v.Select(converter.ConvertFromSaveable))), converter.CreateSaveable, () => new List<ISaveable>(), name);
+        public virtual void AddObjects<TSaveable, TObject, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<IEnumerable<TObject>, TCollection> createCollection, ISaveableObjectConverter<TSaveable, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TSaveable : ISaveable, new() where TCollection : ICollection<TObject> {
+            this.AddObjects(currentValue?.Select(converter.ConvertToSaveable).ToList(), v => loader(createCollection(v.Select(converter.ConvertFromSaveable))), _ => new TSaveable(), () => new List<TSaveable>(), name);
         }
 
-        public virtual void AddValues<T, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<IEnumerable<T>, TCollection> createCollection, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TCollection : ICollection<T> {
-            this.AddValues<IConvertible, List<IConvertible>>(currentValue?.Select(converter.ConvertToValue).ToList(), v => loader(createCollection(v.Select(converter.ConvertFromValue))), () => new List<IConvertible>(), name);
+        public virtual void AddValues<TValue, TObject, TCollection>(TCollection currentValue, Action<TCollection> loader, Func<IEnumerable<TObject>, TCollection> createCollection, ISaveableValueConverter<TValue, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TValue : IConvertible where TCollection : ICollection<TObject> {
+            this.AddValues<TValue, List<TValue>>(currentValue?.Select(converter.ConvertToValue).ToList(), v => loader(createCollection(v.Select(converter.ConvertFromValue))), () => new List<TValue>(), name);
         }
 
-        public virtual void AddObjects<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<IEnumerable<KeyValuePair<TKey, TValue>>, TDict> createDict, ISaveableConverter<TKey> keyConverter, ISaveableConverter<TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TDict : IDictionary<TKey, TValue> {
-            this.AddObjects<IConvertible, ISaveable, Dictionary<IConvertible, ISaveable>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToSaveable(kv.Value)), v => loader(createDict(v.Select(kv => new KeyValuePair<TKey, TValue>(keyConverter.ConvertFromValue(kv.Key), valueConverter.ConvertFromSaveable(kv.Value))))), valueConverter.CreateSaveable, () => new Dictionary<IConvertible, ISaveable>(), name);
+        public virtual void AddObjects<TKeyValue, TKey, TValueSaveable, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<IEnumerable<KeyValuePair<TKey, TValue>>, TDict> createDict, ISaveableValueConverter<TKeyValue, TKey> keyConverter, ISaveableObjectConverter<TValueSaveable, TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TKeyValue : IConvertible where TValueSaveable : ISaveable, new() where TDict : IDictionary<TKey, TValue> {
+            this.AddObjects<TKeyValue, TValueSaveable, Dictionary<TKeyValue, TValueSaveable>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToSaveable(kv.Value)), v => loader(createDict(v.Select(kv => new KeyValuePair<TKey, TValue>(keyConverter.ConvertFromValue(kv.Key), valueConverter.ConvertFromSaveable(kv.Value))))), _ => new TValueSaveable(), () => new Dictionary<TKeyValue, TValueSaveable>(), name);
         }
 
-        public virtual void AddValues<TKey, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<IEnumerable<KeyValuePair<TKey, TValue>>, TDict> createDict, ISaveableConverter<TKey> keyConverter, ISaveableConverter<TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TDict : IDictionary<TKey, TValue> {
-            this.AddValues<IConvertible, IConvertible, Dictionary<IConvertible, IConvertible>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToValue(kv.Value)), v => loader(createDict(v.Select(kv => new KeyValuePair<TKey, TValue>(keyConverter.ConvertFromValue(kv.Key), valueConverter.ConvertFromValue(kv.Value))))), () => new Dictionary<IConvertible, IConvertible>(), name);
+        public virtual void AddValues<TKeyValue, TKey, TValueValue, TValue, TDict>(TDict currentValue, Action<TDict> loader, Func<IEnumerable<KeyValuePair<TKey, TValue>>, TDict> createDict, ISaveableValueConverter<TKeyValue, TKey> keyConverter, ISaveableValueConverter<TValueValue, TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TKeyValue : IConvertible where TValueValue : IConvertible where TDict : IDictionary<TKey, TValue> {
+            this.AddValues<TKeyValue, TValueValue, Dictionary<TKeyValue, TValueValue>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToValue(kv.Value)), v => loader(createDict(v.Select(kv => new KeyValuePair<TKey, TValue>(keyConverter.ConvertFromValue(kv.Key), valueConverter.ConvertFromValue(kv.Value))))), () => new Dictionary<TKeyValue, TValueValue>(), name);
         }
 
         // overloads with new() constraint
@@ -87,20 +87,20 @@ namespace SimplySave {
             this.AddObjects<TKey, TValue, Dictionary<TKey, TValue>>(currentValue, loader, () => new Dictionary<TKey, TValue>(), name);
         }
 
-        public virtual void AddObjects<T>(List<T> currentValue, Action<List<T>> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddObjects(currentValue?.Select(converter.ConvertToSaveable).ToList(), v => loader(v.Select(converter.ConvertFromSaveable).ToList()), converter.CreateSaveable, () => new List<ISaveable>(), name);
+        public virtual void AddObjects<TSaveable, TObject>(List<TObject> currentValue, Action<List<TObject>> loader, ISaveableObjectConverter<TSaveable, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TSaveable : ISaveable, new() {
+            this.AddObjects(currentValue?.Select(converter.ConvertToSaveable).ToList(), v => loader(v.Select(converter.ConvertFromSaveable).ToList()), _ => new TSaveable(), () => new List<TSaveable>(), name);
         }
 
-        public virtual void AddValues<T>(List<T> currentValue, Action<List<T>> loader, ISaveableConverter<T> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddValues<IConvertible, List<IConvertible>>(currentValue?.Select(converter.ConvertToValue).ToList(), v => loader(v.Select(converter.ConvertFromValue).ToList()), () => new List<IConvertible>(), name);
+        public virtual void AddValues<TValue, TObject>(List<TObject> currentValue, Action<List<TObject>> loader, ISaveableValueConverter<TValue, TObject> converter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TValue : IConvertible {
+            this.AddValues<TValue, List<TValue>>(currentValue?.Select(converter.ConvertToValue).ToList(), v => loader(v.Select(converter.ConvertFromValue).ToList()), () => new List<TValue>(), name);
         }
 
-        public virtual void AddObjects<TKey, TValue>(Dictionary<TKey, TValue> currentValue, Action<Dictionary<TKey, TValue>> loader, ISaveableConverter<TKey> keyConverter, ISaveableConverter<TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddObjects<IConvertible, ISaveable, Dictionary<IConvertible, ISaveable>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToSaveable(kv.Value)), v => loader(v.ToDictionary(kv => keyConverter.ConvertFromValue(kv.Key), kv => valueConverter.ConvertFromSaveable(kv.Value))), valueConverter.CreateSaveable, () => new Dictionary<IConvertible, ISaveable>(), name);
+        public virtual void AddObjects<TKeyValue, TKey, TValueSaveable, TValue>(Dictionary<TKey, TValue> currentValue, Action<Dictionary<TKey, TValue>> loader, ISaveableValueConverter<TKeyValue, TKey> keyConverter, ISaveableObjectConverter<TValueSaveable, TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TKeyValue : IConvertible where TValueSaveable : ISaveable, new() {
+            this.AddObjects<TKeyValue, TValueSaveable, Dictionary<TKeyValue, TValueSaveable>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToSaveable(kv.Value)), v => loader(v.ToDictionary(kv => keyConverter.ConvertFromValue(kv.Key), kv => valueConverter.ConvertFromSaveable(kv.Value))), _ => new TValueSaveable(), () => new Dictionary<TKeyValue, TValueSaveable>(), name);
         }
 
-        public virtual void AddValues<TKey, TValue>(Dictionary<TKey, TValue> currentValue, Action<Dictionary<TKey, TValue>> loader, ISaveableConverter<TKey> keyConverter, ISaveableConverter<TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) {
-            this.AddValues<IConvertible, IConvertible, Dictionary<IConvertible, IConvertible>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToValue(kv.Value)), v => loader(v.ToDictionary(kv => keyConverter.ConvertFromValue(kv.Key), kv => valueConverter.ConvertFromValue(kv.Value))), () => new Dictionary<IConvertible, IConvertible>(), name);
+        public virtual void AddValues<TKeyValue, TKey, TValueValue, TValue>(Dictionary<TKey, TValue> currentValue, Action<Dictionary<TKey, TValue>> loader, ISaveableValueConverter<TKeyValue, TKey> keyConverter, ISaveableValueConverter<TValueValue, TValue> valueConverter, [CallerArgumentExpression(nameof(currentValue))] string name = null) where TKeyValue : IConvertible where TValueValue : IConvertible {
+            this.AddValues<TKeyValue, TValueValue, Dictionary<TKeyValue, TValueValue>>(currentValue?.ToDictionary(kv => keyConverter.ConvertToValue(kv.Key), kv => valueConverter.ConvertToValue(kv.Value)), v => loader(v.ToDictionary(kv => keyConverter.ConvertFromValue(kv.Key), kv => valueConverter.ConvertFromValue(kv.Value))), () => new Dictionary<TKeyValue, TValueValue>(), name);
         }
 
         protected static string StripName(string name) {
